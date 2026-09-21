@@ -24,7 +24,7 @@ from skimage.metrics import normalized_root_mse
 import math
 import utils.metrics as metrics
 
-__all__ = ['psnr', 'ssim', 'nrms', 'emd']
+__all__ = ['psnr', 'ssim', 'nrms', 'emd', 'nlll']
 
 def mkdir_or_exist(dir_name, mode=0o777):
     if dir_name == '':
@@ -122,7 +122,12 @@ def nrms(img1, img2, crop_border=0):
         return 0.05
     return nrmse_value
 
-
+# @input_converter(apply_to=('img1', 'img2'))
+def nlll(img1, img2):
+    target = img1
+    prediction_mean = torch.sigmoid(img2[:,0:1,:,:])
+    prediction_var = img2[:,1:2,:,:]
+    return 0.5 * (prediction_var + (target-prediction_mean)**2 / torch.exp(prediction_var))
 
 def get_histogram(img):
     h, w = img.shape

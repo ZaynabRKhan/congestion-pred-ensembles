@@ -6,7 +6,7 @@ import os
 import os.path as osp
 import json
 import numpy as np
-
+import torch
 from tqdm import tqdm
 
 from datasets.build_dataset import build_dataset
@@ -42,41 +42,55 @@ def test():
 
     count =0
     with tqdm(total=len(dataset)) as bar:
-        for feature, label, label_path in dataset:
-            if arg_dict['cpu']:
-                input, target = feature, label
-            else:
-                input, target = feature.cuda(), label.cuda()
+        with torch.inference_mode():
+            for feature, label, label_path in dataset:
+                if arg_dict['cpu']:
+                    input, target = feature, label
+                else:
+                    input, target = feature.cuda(), label.cuda()
 
-            prediction = model(input)
-            print("input:")
-            print("  type:", type(input))
-            print("  shape:", input.shape)
+                prediction = model(input)
+                # pred = prediction[:,0:1,:,:]
 
-            print("prediction:")
-            print("  type:", type(prediction))
-            print("  shape:", prediction.shape)
-            print("  dtype:", prediction.dtype)
-            print("  min:", prediction.min().item())
-            print("  max:", prediction.max().item())
-            for metric, metric_func in metrics.items():
-                if not metric_func(target.cpu(), prediction.squeeze(1).cpu()) == 1:
-                    avg_metrics[metric] += metric_func(target.cpu(), prediction.squeeze(1).cpu())
+                # print("input:")
+                # print("  type:", type(input))
+                # print("  shape:", input.shape)
+                # print("prediction:")
+                # print("  type:", type(prediction))
+                # print("  shape:", prediction.shape)
+                # print("  dtype:", prediction.dtype)
+                # print("  min:", prediction.min().item())
+                # print("  max:", prediction.max().item())
+                # print("target:")
+                # print("  type:", type(target))
+                # print("  shape:", target.shape)
+                # print("  dtype:", target.dtype)
 
-            if arg_dict['plot_roc']:
-                save_path = osp.join(arg_dict['save_path'], 'test_result')
-                if not os.path.exists(save_path):
-                    os.makedirs(save_path)
-                file_name = osp.splitext(osp.basename(label_path[0]))[0]
-                save_path = osp.join(save_path, f'{file_name}.npy')
-                output_final = prediction.float().detach().cpu().numpy()
-                np.save(save_path, output_final)
-                count +=1
+                for metric, metric_func in metrics.items():
+                    metric_value = metric_func(target.cpu(), prediction.cpu())
+                    avg_metrics[metric] += metric_value.mean()
 
-            bar.update(1)
-    
+                # for metric, metric_func in metrics.items():
+                #                 if not metric_func(target.cpu(), prediction.squeeze(1).cpu()) == 1:
+                #                     avg_metrics[metric] += metric_func(target.cpu(), prediction.squeeze(1).cpu())
+
+                if arg_dict['plot_roc']:
+                    save_path = osp.join(arg_dict['save_path'], 'test_result')
+                    if not os.path.exists(save_path):
+                        os.makedirs(save_path)
+                    file_name = osp.splitext(osp.basename(label_path[0]))[0]
+                    save_path = osp.join(save_path, f'{file_name}.npy')
+                    output_final = prediction.float().detach().cpu().numpy()
+                    np.save(save_path, output_final)
+                    count +=1
+
+                bar.update(1)
+        
     for metric, avg_metric in avg_metrics.items():
-        print("===> Avg. {}: {:.4f}".format(metric, avg_metric / len(dataset))) 
+        print("metric, avg_metric and len of dataset", metric, avg_metric, len(dataset))
+        print("types of metric, avg_metric", type(metric), type(avg_metric))
+        avg = avg_metric / len(dataset)
+        print("===> Avg. {}: {:.4f}".format(metric, avg.item())) 
 
     # eval roc&prc
     if arg_dict['plot_roc']:

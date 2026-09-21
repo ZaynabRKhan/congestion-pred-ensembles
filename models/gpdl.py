@@ -125,10 +125,11 @@ class Decoder(nn.Module):
         self.upc1 = upconv(32, 16)
         self.conv2 = conv(16, 16)
         self.upc2 = upconv(32+16, 4)
-        self.conv3 =  nn.Sequential(
-                nn.Conv2d(4, out_dim, 3, 1, 1),
-                nn.Sigmoid()
-                )
+        # self.conv3 =  nn.Sequential(
+        #         nn.Conv2d(4, out_dim, 3, 1, 1),
+        #         nn.Sigmoid()
+        #         )
+        self.conv3 = nn.Conv2d(4, out_dim, 3, 1, 1)
 
     def init_weights(self):
         generation_init_weights(self)

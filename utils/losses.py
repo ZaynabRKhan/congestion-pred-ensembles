@@ -1,7 +1,7 @@
 # Copyright 2022 CircuitNet. All rights reserved.
 
 import functools
-
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -68,9 +68,16 @@ def l1_loss(pred, target):
 def mse_loss(pred, target):
     return F.mse_loss(pred, target, reduction='none')
 
+# @masked_loss
+# def nll_loss(pred, target):
+#     return F.nll_loss(pred, target, reduction='none')
+
 @masked_loss
-def nll_loss(pred, target):
-    return F.nll_loss(pred, target, reduction='none')
+def gaussian_nll(pred, target):
+    mean = torch.sigmoid(pred[:, 0:1, :, :])
+    log_var = pred[:, 1:2, :, :]
+    return 0.5 * (log_var + (target-mean)**2 / torch.exp(log_var))
+
 
 class L1Loss(nn.Module):
     def __init__(self, loss_weight=100.0, reduction='mean', sample_wise=False):
@@ -113,7 +120,7 @@ class NLLLoss(nn.Module):
         self.sample_wise = sample_wise
 
     def forward(self, pred, target, weight=None, **kwargs):
-        return self.loss_weight * nll_loss(
+        return self.loss_weight * gaussian_nll(
             pred,
             target,
             weight,

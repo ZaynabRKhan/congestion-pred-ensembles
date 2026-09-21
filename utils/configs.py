@@ -16,7 +16,7 @@ class Parser(object):
     
         self.parser.add_argument('--pretrained', default=None)
 
-        self.parser.add_argument('--max_iters', default=5000) #default 200k
+        self.parser.add_argument('--max_iters', default=8000) #default 200k
         self.parser.add_argument('--plot_roc', action='store_true')
         self.parser.add_argument('--arg_file', default=None)
         self.parser.add_argument('--cpu', action='store_true')
@@ -33,11 +33,11 @@ class Parser(object):
             
             self.parser.add_argument('--model_type', default='GPDL')
             self.parser.add_argument('--in_channels', default=3)
-            self.parser.add_argument('--out_channels', default=1)
+            self.parser.add_argument('--out_channels', default=2)
             self.parser.add_argument('--lr', default=2e-4)
             self.parser.add_argument('--weight_decay', default=0)
-            self.parser.add_argument('--loss_type', default=['MSELoss','NLLLoss'])
-            self.parser.add_argument('--eval-metric', default=['NRMS', 'SSIM', 'EMD'])
+            self.parser.add_argument('--loss_type', default='NLLLoss')
+            self.parser.add_argument('--eval-metric', default=['NLLL']) #['NRMS', 'SSIM', 'EMD', 'NLLL']
 
         elif self.parser.parse_args().task == 'drc_routenet':
             self.parser.add_argument('--dataroot', default='../../training_set/DRC')
